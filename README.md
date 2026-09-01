@@ -28,7 +28,7 @@ Factory maximums are 2014.5 MHz CPU, 998.4 MHz GPU, and 1600 MHz RAM/EMC. Shield
 
 - Install the [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools).
 - Download `Shield-OC.img` and place it in the Platform Tools folder.
-- Download and install the [Magisk app](https://github.com/topjohnwu/Magisk/releases) on the Shield. Magisk is required to approve root access for the backup command and Shield Tools.
+- Download and install the [Magisk app](https://github.com/topjohnwu/Magisk/releases) on the Shield. The release boot image contains the Magisk boot components; the app manages and approves root access for the backup command and Shield Tools.
 - Enable USB debugging on the Shield and connect it to the computer by USB.
 - [Unlock the bootloader](https://gitlab.com/nvidia/nv-tegra/manifest/android/binary/-/blob/rel-24-uda-r1.4-partner/README_SHIELD?ref_type=heads#flashing-the-shield-device) if it is still locked. This only needs to be done once.
 
@@ -99,5 +99,7 @@ To restore the stock boot image, enter fastboot mode and run:
 fastboot flash boot stock-boot.img
 fastboot reboot
 ```
+
+To compile the kernel or Shield Tools yourself, see [Building from source](patches/README.md).
 
 NVIDIA publishes the [Shield open-source packages and recovery images](https://developer.nvidia.com/shield-open-source). This work builds on Rootfan's [XDA thread](https://xdaforums.com/t/kernel-9-1-performance-enhanced-overclock-kernel.3943079/) and [kernel repository](https://github.com/rootfan/tegra-linux-4.9).
