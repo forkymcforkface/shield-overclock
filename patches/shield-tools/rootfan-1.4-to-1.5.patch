@@ -1,0 +1,389 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -5,7 +5,7 @@
+     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+     <uses-feature android:name="android.software.leanback" android:required="true"/>
+-    <application android:allowBackup="true" android:appComponentFactory="androidx.core.app.CoreComponentFactory" android:debuggable="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/AppTheme">
++    <application android:allowBackup="false" android:appComponentFactory="androidx.core.app.CoreComponentFactory" android:debuggable="false" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/AppTheme">
+-        <activity android:banner="@drawable/new_icon" android:icon="@drawable/home_icon" android:label="@string/app_name" android:logo="@drawable/home_icon" android:name="com.rootfan.shieldtools.MainActivity" android:screenOrientation="landscape">
++        <activity android:banner="@drawable/new_icon" android:exported="true" android:icon="@drawable/home_icon" android:label="@string/app_name" android:logo="@drawable/home_icon" android:name="com.rootfan.shieldtools.MainActivity" android:screenOrientation="landscape">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN"/>
+@@ -12,12 +12,21 @@
+             </intent-filter>
+         </activity>
+-        <activity android:name="com.rootfan.shieldtools.BrowseErrorActivity"/>
++        <activity android:exported="false" android:name="com.rootfan.shieldtools.BrowseErrorActivity"/>
+-        <receiver android:name="com.rootfan.shieldtools.BootSetup">
++        <activity android:exported="false" android:name="com.rootfan.shieldtools.FanModeActivity"/>
++        <activity android:exported="false" android:name="com.rootfan.shieldtools.TrackpadActivity"/>
++        <activity android:exported="false" android:name="com.rootfan.shieldtools.MouseButtonActivity"/>
++        <receiver android:exported="false" android:name="com.rootfan.shieldtools.BootSetup">
+             <intent-filter>
+                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                 <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                 <category android:name="android.intent.category.DEFAULT"/>
+             </intent-filter>
+         </receiver>
++        <receiver android:exported="false" android:name="com.rootfan.shieldtools.OverlayBootReceiver">
++            <intent-filter>
++                <action android:name="android.intent.action.BOOT_COMPLETED"/>
++                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
++            </intent-filter>
++        </receiver>
+     </application>
+ </manifest>
+diff --git a/apktool.yml b/apktool.yml
+--- a/apktool.yml
++++ b/apktool.yml
+@@ -9,8 +9,8 @@ sdkInfo:
+ packageInfo:
+   forcedPackageId: 127
+ versionInfo:
+-  versionCode: 1
+-  versionName: 1.4
++  versionCode: 2
++  versionName: 1.5
+ doNotCompress:
+ - arsc
+ - ogg
+diff --git a/smali_classes2/com/rootfan/shieldtools/BootSetup.smali b/smali_classes2/com/rootfan/shieldtools/BootSetup.smali
+--- a/smali_classes2/com/rootfan/shieldtools/BootSetup.smali
++++ b/smali_classes2/com/rootfan/shieldtools/BootSetup.smali
+@@ -1106,7 +1106,7 @@
+ 
+     const-string v5, "/sys/devices/57000000.gpu/devfreq/57000000.gpu/max_freq"
+ 
+-    const-string v6, "/sys/kernel/debug/clk/emc_master/clk_possible_rates"
++    const-string v6, "/sys/kernel/debug/tegra_bwmgr/debug_client_cap"
+ 
+     const-string v7, "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+ 
+@@ -1193,12 +1193,6 @@
+     invoke-static {}, Lkotlin/jvm/internal/Intrinsics;->throwNpe()V
+ 
+     :cond_4
+-    iget-object v5, v3, Lkotlin/jvm/internal/Ref$ObjectRef;->element:Ljava/lang/Object;
+-
+-    check-cast v5, Ljava/lang/Process;
+-
+-    invoke-virtual {v1, v2, v5}, Lcom/rootfan/shieldtools/BootSetup;->applyFanSettings(Landroid/content/Context;Ljava/lang/Process;)V
+-
+     goto :goto_2
+ 
+     .line 19
+diff --git a/smali_classes2/com/rootfan/shieldtools/CardPresenter.smali b/smali_classes2/com/rootfan/shieldtools/CardPresenter.smali
+--- a/smali_classes2/com/rootfan/shieldtools/CardPresenter.smali
++++ b/smali_classes2/com/rootfan/shieldtools/CardPresenter.smali
+@@ -426,6 +426,22 @@
+ 
+     invoke-virtual {v1, v3}, Landroidx/leanback/widget/ImageCardView;->setTitleText(Ljava/lang/CharSequence;)V
+ 
++    invoke-virtual {v6}, Landroid/view/ViewGroup;->getContext()Landroid/content/Context;
++
++    move-result-object v4
++
++    invoke-virtual {v0}, Lcom/rootfan/shieldtools/Item;->getTitle()Ljava/lang/String;
++
++    move-result-object v5
++
++    invoke-static {v4, v5}, Lcom/rootfan/shieldtools/CardStatus;->get(Landroid/content/Context;Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v4
++
++    check-cast v4, Ljava/lang/CharSequence;
++
++    invoke-virtual {v1, v4}, Landroidx/leanback/widget/ImageCardView;->setContentText(Ljava/lang/CharSequence;)V
++
+     .line 68
+     sget v3, Lcom/rootfan/shieldtools/CardPresenter;->CARD_WIDTH:I
+ 
+diff --git a/smali_classes2/com/rootfan/shieldtools/ItemLists.smali b/smali_classes2/com/rootfan/shieldtools/ItemLists.smali
+--- a/smali_classes2/com/rootfan/shieldtools/ItemLists.smali
++++ b/smali_classes2/com/rootfan/shieldtools/ItemLists.smali
+@@ -66,7 +66,7 @@
+ 
+ # direct methods
+ .method static constructor <clinit>()V
+-    .locals 9
++    .locals 10
+ 
+     const/4 v0, 0x1
+ 
+@@ -158,17 +158,17 @@
+     new-array v1, v1, [[Ljava/lang/String;
+ 
+     .line 27
+-    const-string v2, "CPU"
++    const-string v4, "CPU"
+ 
+-    const-string v4, "GPU"
++    const-string v5, "GPU"
+ 
+-    const-string v5, "RAM"
++    const-string v6, "RAM"
+ 
+-    const-string v6, "Governor"
++    const-string v7, "Governor"
+ 
+-    const-string v7, "Fan"
++    const-string v8, "Fan"
+ 
+-    filled-new-array {v2, v4, v5, v6, v7}, [Ljava/lang/String;
++    filled-new-array {v4, v5, v6, v7, v8}, [Ljava/lang/String;
+ 
+     move-result-object v2
+ 
+diff --git a/smali_classes2/com/rootfan/shieldtools/MainFragment$ItemViewClickedListener.smali b/smali_classes2/com/rootfan/shieldtools/MainFragment$ItemViewClickedListener.smali
+--- a/smali_classes2/com/rootfan/shieldtools/MainFragment$ItemViewClickedListener.smali
++++ b/smali_classes2/com/rootfan/shieldtools/MainFragment$ItemViewClickedListener.smali
+@@ -129,9 +129,21 @@
+     if-eqz v0, :cond_2
+ 
+     .line 194
+-    iget-object v0, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++    new-instance v0, Landroid/content/Intent;
++
++    iget-object v1, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++
++    invoke-virtual {v1}, Lcom/rootfan/shieldtools/MainFragment;->getActivity()Landroid/app/Activity;
++
++    move-result-object v1
++
++    const-class v2, Lcom/rootfan/shieldtools/MouseButtonActivity;
++
++    invoke-direct {v0, v1, v2}, Landroid/content/Intent;-><init>(Landroid/content/Context;Ljava/lang/Class;)V
+ 
+-    invoke-static {v0}, Lcom/rootfan/shieldtools/MainFragment;->access$ControllerMouse(Lcom/rootfan/shieldtools/MainFragment;)V
++    iget-object v1, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++
++    invoke-virtual {v1, v0}, Lcom/rootfan/shieldtools/MainFragment;->startActivity(Landroid/content/Intent;)V
+ 
+     goto/16 :goto_1
+ 
+@@ -146,9 +158,21 @@
+     if-eqz v0, :cond_2
+ 
+     .line 196
+-    iget-object v0, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++    new-instance v0, Landroid/content/Intent;
++
++    iget-object v1, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++
++    invoke-virtual {v1}, Lcom/rootfan/shieldtools/MainFragment;->getActivity()Landroid/app/Activity;
++
++    move-result-object v1
+ 
+-    invoke-static {v0}, Lcom/rootfan/shieldtools/MainFragment;->access$TrackpadSpeed(Lcom/rootfan/shieldtools/MainFragment;)V
++    const-class v2, Lcom/rootfan/shieldtools/TrackpadActivity;
++
++    invoke-direct {v0, v1, v2}, Landroid/content/Intent;-><init>(Landroid/content/Context;Ljava/lang/Class;)V
++
++    iget-object v1, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++
++    invoke-virtual {v1, v0}, Lcom/rootfan/shieldtools/MainFragment;->startActivity(Landroid/content/Intent;)V
+ 
+     goto :goto_0
+ 
+@@ -211,9 +235,21 @@
+     if-eqz v0, :cond_2
+ 
+     .line 193
+-    iget-object v0, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++    new-instance v0, Landroid/content/Intent;
++
++    iget-object v1, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++
++    invoke-virtual {v1}, Lcom/rootfan/shieldtools/MainFragment;->getActivity()Landroid/app/Activity;
++
++    move-result-object v1
+ 
+-    invoke-static {v0}, Lcom/rootfan/shieldtools/MainFragment;->access$fanControl(Lcom/rootfan/shieldtools/MainFragment;)V
++    const-class v2, Lcom/rootfan/shieldtools/FanModeActivity;
++
++    invoke-direct {v0, v1, v2}, Landroid/content/Intent;-><init>(Landroid/content/Context;Ljava/lang/Class;)V
++
++    iget-object v1, p0, Lcom/rootfan/shieldtools/MainFragment$ItemViewClickedListener;->this$0:Lcom/rootfan/shieldtools/MainFragment;
++
++    invoke-virtual {v1, v0}, Lcom/rootfan/shieldtools/MainFragment;->startActivity(Landroid/content/Intent;)V
+ 
+     goto :goto_1
+ 
+@@ -361,6 +397,8 @@
+     .line 211
+     return-void
+ 
++    nop
++
+     :sswitch_data_0
+     .sparse-switch
+         -0x719840aa -> :sswitch_6
+diff --git a/smali_classes2/com/rootfan/shieldtools/MainFragment$memOC$1.smali b/smali_classes2/com/rootfan/shieldtools/MainFragment$memOC$1.smali
+--- a/smali_classes2/com/rootfan/shieldtools/MainFragment$memOC$1.smali
++++ b/smali_classes2/com/rootfan/shieldtools/MainFragment$memOC$1.smali
+@@ -126,7 +126,7 @@
+ 
+     invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+-    const-string v2, "000000 > /sys/kernel/debug/clk/emc_master/clk_possible_rates"
++    const-string v2, "000000 > /sys/kernel/debug/tegra_bwmgr/debug_client_cap"
+ 
+     invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ 
+diff --git a/smali_classes2/com/rootfan/shieldtools/MainFragment.smali b/smali_classes2/com/rootfan/shieldtools/MainFragment.smali
+--- a/smali_classes2/com/rootfan/shieldtools/MainFragment.smali
++++ b/smali_classes2/com/rootfan/shieldtools/MainFragment.smali
+@@ -3930,9 +3930,9 @@
+     :cond_1
+     if-eqz v0, :cond_3
+ 
+-    move-object v2, p2
++    invoke-static {p1, p2}, Lcom/rootfan/shieldtools/ClockLabels;->forDialog(Ljava/lang/String;[Ljava/lang/String;)[Ljava/lang/CharSequence;
+ 
+-    check-cast v2, [Ljava/lang/CharSequence;
++    move-result-object v2
+ 
+     if-eqz p3, :cond_2
+ 
+@@ -2882,7 +2882,7 @@
+     .line 351
+     move-object/from16 v1, p0
+ 
+-    const-string v0, "/sys/kernel/debug/clk/emc_master/clk_possible_rates"
++    const-string v0, "/sys/kernel/debug/tegra_bwmgr/debug_client_cap"
+ 
+     invoke-direct {v1, v0}, Lcom/rootfan/shieldtools/MainFragment;->nativeRead(Ljava/lang/String;)Ljava/lang/String;
+ 
+@@ -2920,9 +2920,9 @@
+ 
+     .line 353
+     .local v3, "title":Ljava/lang/String;
+-    const/16 v4, 0x3e8
++    const v4, 0xf4240
+ 
+-    const/4 v5, 0x2
++    const/4 v5, 0x1
+ 
+     :try_start_0
+     new-instance v0, Ljava/lang/StringBuilder;
+@@ -2945,6 +2945,10 @@
+ 
+     check-cast v6, Ljava/lang/String;
+ 
++    invoke-virtual {v6}, Ljava/lang/String;->trim()Ljava/lang/String;
++
++    move-result-object v6
++
+     invoke-static {v6}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
+ 
+     move-result v6
+@@ -2978,7 +2982,7 @@
+ 
+     invoke-direct {v0, v6}, Lkotlin/text/Regex;-><init>(Ljava/lang/String;)V
+ 
+-    const-string v6, "/sys/kernel/debug/tegra_emc/stats"
++    const-string v6, "/sys/kernel/debug/clk/emc_master/clk_possible_rates"
+ 
+     invoke-direct {v1, v6}, Lcom/rootfan/shieldtools/MainFragment;->nativeRead(Ljava/lang/String;)Ljava/lang/String;
+ 
+@@ -3010,14 +3014,14 @@
+ 
+     move-result v6
+ 
+-    if-lez v6, :cond_2
++    if-lez v6, :cond_1
+ 
+     .line 357
+     invoke-interface {v0}, Ljava/util/List;->size()I
+ 
+     move-result v6
+ 
+-    add-int/lit8 v6, v6, -0x3
++    add-int/lit8 v6, v6, 0x0
+ 
+     invoke-interface {v0, v10, v6}, Ljava/util/List;->subList(II)Ljava/util/List;
+ 
+@@ -3027,31 +3031,10 @@
+     nop
+ 
+     .line 362
+-    invoke-interface {v0}, Ljava/util/List;->size()I
+-
+-    move-result v6
+-
+-    div-int/2addr v6, v5
+-
+-    if-gt v8, v6, :cond_0
+-
+-    move v5, v8
+-
+-    .line 363
+-    .local v5, "i":I
+-    :goto_1
+-    invoke-interface {v0, v5}, Ljava/util/List;->remove(I)Ljava/lang/Object;
+-
+-    .line 362
+-    if-eq v5, v6, :cond_0
+-
+-    .end local v5    # "i":I
+-    add-int/lit8 v5, v5, 0x1
+-
+     goto :goto_1
+ 
+     .line 364
+-    :cond_0
++    :goto_1
+     new-instance v5, Lkotlin/jvm/internal/Ref$ObjectRef;
+ 
+     invoke-direct {v5}, Lkotlin/jvm/internal/Ref$ObjectRef;-><init>()V
+@@ -3083,7 +3066,7 @@
+ 
+     move-result v12
+ 
+-    if-eqz v12, :cond_1
++    if-eqz v12, :cond_0
+ 
+     invoke-interface {v11}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+ 
+@@ -3125,7 +3108,7 @@
+     goto :goto_2
+ 
+     .line 654
+-    :cond_1
++    :cond_0
+     nop
+ 
+     .line 364
+@@ -3164,7 +3147,7 @@
+ 
+     .line 359
+     .end local v4    # "workingClocks":Lkotlin/jvm/internal/Ref$ObjectRef;
+-    :cond_2
++    :cond_1
+     invoke-virtual/range {p0 .. p0}, Lcom/rootfan/shieldtools/MainFragment;->getContext()Landroid/content/Context;
+ 
+     move-result-object v4
+@@ -3948,7 +3931,11 @@
+     :goto_1
+     check-cast v3, Landroid/content/DialogInterface$OnClickListener;
+ 
+-    invoke-virtual {v0, v2, v3}, Landroid/app/AlertDialog$Builder;->setItems([Ljava/lang/CharSequence;Landroid/content/DialogInterface$OnClickListener;)Landroid/app/AlertDialog$Builder;
++    invoke-static {p1, v2}, Lcom/rootfan/shieldtools/SelectionIndex;->find(Ljava/lang/String;[Ljava/lang/CharSequence;)I
++
++    move-result v4
++
++    invoke-virtual {v0, v2, v4, v3}, Landroid/app/AlertDialog$Builder;->setSingleChoiceItems([Ljava/lang/CharSequence;ILandroid/content/DialogInterface$OnClickListener;)Landroid/app/AlertDialog$Builder;
+ 
+     .line 282
+     :cond_3
+@@ -4507,7 +4494,7 @@
+     :cond_1
+     if-eqz v0, :cond_2
+ 
+-    const-string v2, "Version: 1.4\nAuthor: Rootfan\nEnjoy the overclocked kernel :-)"
++    const-string v2, "Version: 1.5\nAuthor: Rootfan\nUpdated by forkymcforkface"
+ 
+     check-cast v2, Ljava/lang/CharSequence;
+ 

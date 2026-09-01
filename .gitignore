@@ -1,0 +1,8 @@
+/work/
+/out/
+*.img
+Image
+config.gz
+**/.gradle/
+**/build/
+*.apk

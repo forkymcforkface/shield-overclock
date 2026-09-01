@@ -1,0 +1,78 @@
+diff --git a/drivers/cpufreq/tegra210-cpufreq.c b/drivers/cpufreq/tegra210-cpufreq.c
+index 7c4ded1..0ed78ec 100644
+--- a/drivers/cpufreq/tegra210-cpufreq.c
++++ b/drivers/cpufreq/tegra210-cpufreq.c
+@@ -206,6 +206,7 @@ dfll_fail:
+ 
+ static int cpufreq_table_make_from_dt(void)
+ {
++	static const u32 foster_oc_freqs[] = { 2116500, 2218500 };
+ 	struct tegra_cpufreq_table_data *tftbl = &tfreq_priv->tfrqtbl;
+ 	struct device *dev = &tfreq_priv->pdev->dev;
+ 	struct cpufreq_frequency_table *ftbl;
+@@ -264,6 +265,18 @@ static int cpufreq_table_make_from_dt(void)
+ 			i++;
+ 		}
+ 	}
++
++	/* Shield 9.2.x DT stops at 2.0145 GHz; expose accepted OC OPPs. */
++	for (j = 0; j < ARRAY_SIZE(foster_oc_freqs); j++) {
++		if (i < CPU_FREQ_TABLE_MAX_SIZE - 1 &&
++		    (!i || ftbl[i - 1].frequency < foster_oc_freqs[j]) &&
++		    clk_round_rate(tfreq_priv->cpu_clk,
++				   foster_oc_freqs[j] * 1000) > 0) {
++			ftbl[i].driver_data = 0;
++			ftbl[i].frequency = foster_oc_freqs[j];
++			i++;
++		}
++	}
+ 	ftbl[i].driver_data = 0;
+ 	ftbl[i].frequency = CPUFREQ_TABLE_END;
+ 	tftbl->freq_table = ftbl;
+diff --git a/drivers/soc/tegra/tegra210-dvfs.c b/drivers/soc/tegra/tegra210-dvfs.c
+index c76120c..2d86aa7 100644
+--- a/drivers/soc/tegra/tegra210-dvfs.c
++++ b/drivers/soc/tegra/tegra210-dvfs.c
+@@ -255,6 +255,7 @@ static struct dvfs cpu_dvfs = {
+ 		{1836000000UL,	{  5100873,  -279186,     4747 } }, \
+ 		{1912500000UL,	{  5100873,  -279186,     4747 } }, \
+ 		{2014500000UL,	{  5100873,  -279186,     4747 } }, \
++		{2116500000UL,	{  5100873,  -279186,     4747 } }, \
+ 		{2218500000UL,	{  5100873,  -279186,     4747 } }, \
+ 		{0,           	{ } }, \
+ 	}
+@@ -486,14 +487,14 @@ static struct cpu_dvfs cpu_fv_dvfs_table[] = {
+ 		.speedo_id = 2,
+ 		.process_id = 0,
+ 		.min_mv = 870,
+-		.max_mv = 1227,
++		.max_mv = 1284,
+ 		CPU_PLL_CVB_TABLE,
+ 	},
+ 	{
+ 		.speedo_id = 2,
+ 		.process_id = 1,
+ 		.min_mv = 870,
+-		.max_mv = 1227,
++		.max_mv = 1284,
+ 		CPU_PLL_CVB_TABLE,
+ 	},
+ 	{
+@@ -514,14 +515,14 @@ static struct cpu_dvfs cpu_fv_dvfs_table[] = {
+ 		.speedo_id = 0,
+ 		.process_id = 0,
+ 		.min_mv = 850,
+-		.max_mv = 1170,
++		.max_mv = 1284,
+ 		CPU_PLL_CVB_TABLE,
+ 	},
+ 	{
+ 		.speedo_id = 0,
+ 		.process_id = 1,
+ 		.min_mv = 850,
+-		.max_mv = 1170,
++		.max_mv = 1284,
+ 		CPU_PLL_CVB_TABLE,
+ 	},
+ };
+

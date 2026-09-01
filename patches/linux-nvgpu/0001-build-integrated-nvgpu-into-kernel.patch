@@ -1,0 +1,28 @@
+diff --git a/drivers/gpu/Makefile b/drivers/gpu/Makefile
+index 1a13b09..be76bdb 100644
+--- a/drivers/gpu/Makefile
++++ b/drivers/gpu/Makefile
+@@ -1,2 +1,2 @@
+ # Choose this option if you have an SoC with integrated Nvidia GPU IP.
+-obj-m += nvgpu/
++obj-y += nvgpu/
+diff --git a/drivers/gpu/nvgpu/Makefile.linux.configs b/drivers/gpu/nvgpu/Makefile.linux.configs
+index 05d3934..b4e67a7 100644
+--- a/drivers/gpu/nvgpu/Makefile.linux.configs
++++ b/drivers/gpu/nvgpu/Makefile.linux.configs
+@@ -1,5 +1,5 @@
+ # Turn off all other configs, if CONFIG_GK20A is not set
+-CONFIG_GK20A := m
++CONFIG_GK20A := y
+ 
+ # Enable GK20A PMU features.
+ CONFIG_GK20A_PMU := y
+@@ -77,7 +77,7 @@ endif
+ # Enable support for GPUs on PCIe bus.
+ ifeq ($(CONFIG_PCI),y)
+ # Support for NVGPU DGPU
+-CONFIG_NVGPU_DGPU := y
++CONFIG_NVGPU_DGPU := n
+ endif
+ 
+ # Enable nvgpu debug facility to redirect debug spew to ftrace. This

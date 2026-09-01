@@ -1,0 +1,74 @@
+diff --git a/drivers/clk/tegra/clk-tegra210.c b/drivers/clk/tegra/clk-tegra210.c
+index 8e8ed87e..72d317ff 100644
+--- a/drivers/clk/tegra/clk-tegra210.c
++++ b/drivers/clk/tegra/clk-tegra210.c
+@@ -3526 +3526 @@ static __init void tegra210_shared_clk_init(char *sclk_high_clk)
+-		12750000, t210b01 ? 1866000000 : 1600000000);
++		12750000, 1866000000);
+diff --git a/drivers/memory/tegra/tegra210-emc-reg.h b/drivers/memory/tegra/tegra210-emc-reg.h
+index e0c091df..86b0d13d 100644
+--- a/drivers/memory/tegra/tegra210-emc-reg.h
++++ b/drivers/memory/tegra/tegra210-emc-reg.h
+@@ -27 +27 @@
+-#define TEGRA_EMC_TABLE_MAX_SIZE				16
++#define TEGRA_EMC_TABLE_MAX_SIZE				32
+diff --git a/drivers/memory/tegra/tegra210-emc.c b/drivers/memory/tegra/tegra210-emc.c
+index 5f98ae0f..3168cd0d 100644
+--- a/drivers/memory/tegra/tegra210-emc.c
++++ b/drivers/memory/tegra/tegra210-emc.c
+@@ -31 +31 @@
+-#define TEGRA_EMC_TABLE_MAX_SIZE		16
++#define TEGRA_EMC_TABLE_MAX_SIZE		32
+@@ -2291,0 +2292 @@ static int tegra210_init_emc_data(struct platform_device *pdev)
++	int original_table_size;
+@@ -2293,0 +2295,2 @@ static int tegra210_init_emc_data(struct platform_device *pdev)
++	struct emc_table *expanded_normal;
++	struct emc_table *expanded_derated;
+@@ -2339,0 +2343,47 @@ static int tegra210_init_emc_data(struct platform_device *pdev)
++	original_table_size = tegra_emc_table_size;
++	if (tegra_emc_table_normal[original_table_size - 1].rate == 1600000 &&
++	    original_table_size + 11 <= TEGRA_EMC_TABLE_MAX_SIZE) {
++		expanded_normal = devm_kcalloc(&pdev->dev,
++					 original_table_size + 11,
++					 sizeof(*expanded_normal), GFP_KERNEL);
++		if (!expanded_normal)
++			return -ENOMEM;
++		memcpy(expanded_normal, tegra_emc_table_normal,
++		       original_table_size * sizeof(*expanded_normal));
++
++		expanded_derated = NULL;
++		if (tegra_emc_table_derated) {
++			expanded_derated = devm_kcalloc(&pdev->dev,
++						  original_table_size + 11,
++						  sizeof(*expanded_derated), GFP_KERNEL);
++			if (!expanded_derated)
++				return -ENOMEM;
++			memcpy(expanded_derated, tegra_emc_table_derated,
++			       original_table_size * sizeof(*expanded_derated));
++		}
++
++		for (i = 0; i < 11; i++) {
++			int dst = original_table_size + i;
++			u32 rate = 1625000 + 25000 * i;
++
++			expanded_normal[dst] = expanded_normal[original_table_size - 1];
++			expanded_normal[dst].rate = rate;
++			if (rate >= 1750000)
++				expanded_normal[dst].min_volt = 925;
++
++			if (expanded_derated) {
++				expanded_derated[dst] =
++					expanded_derated[original_table_size - 1];
++				expanded_derated[dst].rate = rate;
++				if (rate >= 1750000)
++					expanded_derated[dst].min_volt = 925;
++			}
++		}
++		expanded_normal[original_table_size + 10].rate = 1866000;
++		if (expanded_derated)
++			expanded_derated[original_table_size + 10].rate = 1866000;
++
++		tegra_emc_table_normal = expanded_normal;
++		tegra_emc_table_derated = expanded_derated;
++		tegra_emc_table_size = original_table_size + 11;
++	}

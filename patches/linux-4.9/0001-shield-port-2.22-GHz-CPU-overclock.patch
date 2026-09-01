@@ -1,0 +1,71 @@
+diff --git a/drivers/clk/tegra/clk-tegra124-dfll-fcpu.c b/drivers/clk/tegra/clk-tegra124-dfll-fcpu.c
+index a6e91438..64af056c 100644
+--- a/drivers/clk/tegra/clk-tegra124-dfll-fcpu.c
++++ b/drivers/clk/tegra/clk-tegra124-dfll-fcpu.c
+@@ -96,7 +96,7 @@ static const struct cvb_table tegra124_cpu_cvb_tables[] = {
+ };
+ 
+ static const unsigned long tegra210_cpu_max_freq_table[] = {
+-	[0] = 1912500000UL,
++	[0] = 2218500000UL,
+ 	[1] = 1912500000UL,
+ 	[2] = 2218500000UL,
+ 	[3] = 1785000000UL,
+@@ -132,7 +132,8 @@ static const unsigned long tegra210_cpu_max_freq_table[] = {
+ 		{1836000000UL,	{1864006, -40065, 370} }, \
+ 		{1912500000UL,	{1910780, -40815, 370} }, \
+ 		{2014500000UL,	{1227000,      0,   0} }, \
+-		{2218500000UL,	{1227000,      0,   0} }, \
++		{2116500000UL,	{1227000,      0,   0} }, \
++		{2218500000UL,	{1284000,      0,   0} }, \
+ 		{0,           	{      0,      0,   0} }, \
+ 	}
+ 
+@@ -438,7 +439,7 @@ struct cvb_table tegra210_cpu_cvb_tables[] = {
+ 		.speedo_id = 2,
+ 		.process_id = 0,
+ 		.min_millivolts = 870,
+-		.max_millivolts = 1227,
++		.max_millivolts = 1284,
+ 		CPU_CVB_TABLE,
+ 		.cpu_dfll_data = {
+ 			.tune0_low = 0xffead0ff,
+@@ -449,7 +450,7 @@ struct cvb_table tegra210_cpu_cvb_tables[] = {
+ 		.speedo_id = 2,
+ 		.process_id = 1,
+ 		.min_millivolts = 870,
+-		.max_millivolts = 1227,
++		.max_millivolts = 1284,
+ 		CPU_CVB_TABLE,
+ 		.cpu_dfll_data = {
+ 			.tune0_low = 0xffead0ff,
+@@ -486,7 +487,7 @@ struct cvb_table tegra210_cpu_cvb_tables[] = {
+ 		.speedo_id = 0,
+ 		.process_id = 0,
+ 		.min_millivolts = 850,
+-		.max_millivolts = 1170,
++		.max_millivolts = 1284,
+ 		CPU_CVB_TABLE,
+ 		.cpu_dfll_data = {
+ 			.tune0_low = 0xffead0ff,
+@@ -499,7 +500,7 @@ struct cvb_table tegra210_cpu_cvb_tables[] = {
+ 		.speedo_id = 0,
+ 		.process_id = 1,
+ 		.min_millivolts = 850,
+-		.max_millivolts = 1170,
++		.max_millivolts = 1284,
+ 		CPU_CVB_TABLE,
+ 		.cpu_dfll_data = {
+ 			.tune0_low = 0xffead0ff,
+@@ -823,7 +824,9 @@ static int tegra124_dfll_fcpu_probe(struct platform_device *pdev)
+ 		return -ENODEV;
+ 	}
+ 	max_freq = fcpu_data->cpu_max_freq_table[speedo_id];
+-	if (!of_property_read_u32(pdev->dev.of_node, "nvidia,dfll-max-freq-khz",
++	if (!(fcpu_data == &tegra210_dfll_fcpu_data &&
++	      max_freq == 2218500000UL) &&
++	    !of_property_read_u32(pdev->dev.of_node, "nvidia,dfll-max-freq-khz",
+ 				  &f))
+ 		max_freq = min(max_freq, f * 1000UL);
+ 
+

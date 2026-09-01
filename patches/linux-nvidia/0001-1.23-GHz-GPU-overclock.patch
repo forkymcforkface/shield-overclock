@@ -1,0 +1,34 @@
+From 50e973c532a9d70e7be0ac3490a922df9c14cefd Mon Sep 17 00:00:00 2001
+From: Derek <nielson925@gmail.com>
+Date: Tue, 10 Sep 2019 01:14:59 -0600
+Subject: [PATCH] shield: correct monotonic 1.2288 GHz GPU table
+
+---
+ drivers/soc/tegra/tegra210-dvfs.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/soc/tegra/tegra210-dvfs.c b/drivers/soc/tegra/tegra210-dvfs.c
+index 1f3d664c5..79f7da245 100644
+--- a/drivers/soc/tegra/tegra210-dvfs.c
++++ b/drivers/soc/tegra/tegra210-dvfs.c
+@@ -685,6 +685,9 @@ static struct dvfs cpu_lp_dvfs = {
+ 		{  844800, { }, {  1233208,     8144,     -940,      808,   -21583,      226 }, }, \
+ 		{  921600, { }, {  1275100,     8144,     -940,      808,   -21583,      226 }, }, \
+ 		{  998400, { }, {  1316991,     8144,     -940,      808,   -21583,      226 }, }, \
++		{ 1075200, { }, {  1150000,        0,        0,        0,        0,        0 }, }, \
++		{ 1152000, { }, {  1150000,        0,        0,        0,        0,        0 }, }, \
++		{ 1228800, { }, {  1150000,        0,        0,        0,        0,        0 }, }, \
+ 		{ 0,	   { }, { }, }, \
+ 	}
+ 
+@@ -760,7 +763,7 @@ static struct cvb_dvfs gpu_cvb_dvfs_table[] = {
+ 		.process_id = -1,
+ 		.pll_min_millivolts = 840,
+ 		.max_mv = 1150,
+-		.max_freq = 998400,
++		.max_freq = 1228800,
+ #ifdef CONFIG_TEGRA_USE_NA_GPCPLL
+ 		NA_FREQ_CVB_TABLE,
+ #else
+-- 
+2.53.0.windows.1

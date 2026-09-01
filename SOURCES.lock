@@ -1,0 +1,14 @@
+linux-4.9.url=https://gitlab.com/nvidia/nv-tegra/linux-4.9.git
+linux-4.9.branch=rel-shield-r-r1-9.2.2-opensource-4.9
+linux-4.9.commit=e7d2f8cc12ddadad5664014cc79eeb528a65646a
+linux-nvidia.url=https://gitlab.com/nvidia/nv-tegra/linux-nvidia.git
+linux-nvidia.branch=rel-shield-r-r1-9.2.2-opensource
+linux-nvidia.commit=0c6601439a7248857325e3c576ebee33f2c8601b
+linux-nvgpu.url=https://gitlab.com/nvidia/nv-tegra/linux-nvgpu.git
+linux-nvgpu.branch=rel-shield-r-r1-9.2.2-opensource
+linux-nvgpu.commit=9fc87a7ec7b87ac40ccf8f81896c6da755ffc9f8
+manifest.url=https://gitlab.com/nvidia/nv-tegra/manifest/android/binary.git
+manifest.branch=rel-shield-r-r1-9.2.2-opensource
+expected.kernelrelease=4.9.141-tegra+
+toolchain.android_clang=r416183b
+toolchain.clang_version=12.0.5
